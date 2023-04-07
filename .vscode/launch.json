@@ -1,0 +1,26 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "C/C++ Runner: Debug Session",
+      "type": "cppdbg",
+      "request": "launch",
+      "args": [
+        "run_tests"
+      ],
+      "stopAtEntry": false,
+      "externalConsole": true,
+      "cwd": "c:/Users/Kyrollos Youssef/source/coleg/assignment_3",
+      "program": "c:/Users/Kyrollos Youssef/source/coleg/assignment_3/build/Release/outRelease",
+      "MIMode": "gdb",
+      "miDebuggerPath": "gdb",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ]
+    }
+  ]
+}
