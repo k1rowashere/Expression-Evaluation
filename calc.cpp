@@ -18,6 +18,19 @@ struct Token {
     Token(char p_op) : type(OPERATOR), value(0), op(p_op) {}
     Token(Type p_type) : type(p_type), value(0), op(0) {}
     Token() : type(NUMBER), value(0), op(0) {}
+
+    // for printing
+    friend std::ostream& operator<<(std::ostream& os, const Token& token)
+    {
+        switch (token.type) {
+        case NUMBER: os << token.value; break;
+        case OPERATOR:
+        case UNARY_MINUS: os << token.op; break;
+        case LPAR: os << "("; break;
+        case RPAR: os << ")"; break;
+        }
+        return os;
+    }
 };
 
 bool equals(float a, float b) { return std::abs(a - b) < EPSILON; }
@@ -188,8 +201,8 @@ List<Token> infix_to_postfix(List<Token> tokens_infix)
     return tokens_postfix;
 }
 
-// Evaluates a postfix expression, throws an exception if the expression is
-// invalid or if there is a division by zero
+// Evaluates a postfix expression
+// Throws an exception if the expression is invalid or division by zero
 float evaluate_postfix(List<Token> tokens)
 {
     Stack<float> stack;
@@ -241,36 +254,6 @@ float evaluate_postfix(List<Token> tokens)
     if (stack.get_size() != 1)
         throw std::string("Invalid expression");
     return stack.pop();
-}
-
-void print_tokens(List<Token> tokens)
-{
-    for (size_t i = 0; i < tokens.get_size(); i++) {
-        Token token = tokens[i];
-        switch (token.type) {
-        case Token::NUMBER: {
-            std::cout << token.value << " ";
-            break;
-        }
-        case Token::OPERATOR: {
-            std::cout << token.op << " ";
-            break;
-        }
-        case Token::LPAR: {
-            std::cout << "(";
-            break;
-        }
-        case Token::RPAR: {
-            std::cout << ") ";
-            break;
-        }
-        case Token::UNARY_MINUS: {
-            std::cout << "- ";
-            break;
-        }
-        }
-    }
-    std::cout << std::endl;
 }
 
 void tests()
@@ -396,8 +379,7 @@ int main(int argc, char** argv)
         float result               = evaluate_postfix(tokens_postfix);
         std::cout << argv[1] << " = " << result << std::endl;
 
-        std::cout << "postfix: ";
-        print_tokens(tokens_postfix);
+        std::cout << "postfix: " << tokens_postfix;
     }
     catch (std::string e) {
         std::cout << e << std::endl;

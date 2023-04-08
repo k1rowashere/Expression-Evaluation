@@ -1,5 +1,6 @@
 #pragma once
 #include <cstddef>
+#include <iostream>
 // dynamic list implementation using array
 
 template <typename T> class List {
@@ -73,4 +74,17 @@ template <typename T> class List {
     }
     size_t get_size() { return size; }
     T last() { return arr[size - 1]; }
+
+    // for cout printing
+    friend std::ostream& operator<<(std::ostream& os, const List& list)
+    {
+        os << "[";
+        for (size_t i = 0; i < list.size; i++) {
+            os << list.arr[i];
+            if (i != list.size - 1)
+                os << ", ";
+        }
+        os << "]";
+        return os;
+    }
 };
