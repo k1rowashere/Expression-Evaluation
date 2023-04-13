@@ -2,7 +2,6 @@
 #include "stack.h"
 #include <cmath> // pow
 #include <cstdlib>
-#include <cstring> // strchr
 #include <iomanip>
 #include <iostream> // cout
 #include <string>
@@ -35,6 +34,21 @@ struct Token {
 
 bool equals(float a, float b) { return std::abs(a - b) < EPSILON; }
 
+// Returns the priority of an operator
+// Higher number means higher priority
+int priority(char op)
+{
+    switch (op) {
+    case '^': return 3;
+    case '*':
+    case '/':
+    case '%': return 2;
+    case '+':
+    case '-': return 1;
+    default: return 0;
+    }
+}
+
 // Parses a string into a list of tokens
 // Throws an exception if the string is invalid
 // Edge cases Handled:
@@ -42,6 +56,7 @@ bool equals(float a, float b) { return std::abs(a - b) < EPSILON; }
 //  - two numbers in a row
 //  - two operators in a row
 //  - operator at the beginning of the expression
+//  - operator at the end of the expression
 //  - implicit multiplication
 //  - unary operators
 List<Token> tokenize(std::string str)
@@ -81,6 +96,14 @@ List<Token> tokenize(std::string str)
 
             size_t offset = 0;
             float val     = std::stof(str.substr(i), &offset);
+
+            // if last token is a unary minus, make it a negative number
+            if (tokens.get_size() > 0 &&
+                tokens.last().type == Token::UNARY_MINUS) {
+                tokens.pop_back();
+                val = -val;
+            }
+
             tokens.push_back(Token{val});
             // skip the rest of the number
             i += offset - 1;
@@ -130,6 +153,12 @@ List<Token> tokenize(std::string str)
         }
     }
 
+    // operator at the end of the expression
+    if (tokens.last().type == Token::OPERATOR ||
+        tokens.last().type == Token::UNARY_MINUS)
+        throw "Unexpected token at position " + std::to_string(str.length()) +
+            ", expected NUMBER but found end of expression";
+
     return tokens;
 }
 
@@ -149,23 +178,15 @@ List<Token> infix_to_postfix(List<Token> tokens_infix)
             break;
         }
         case Token::OPERATOR: {
-            // operator precedence
-            const char* precedence = "^%*/+-";
-            while (!stack.is_empty() && stack.peek().type != Token::LPAR) {
-                /*
-                 * if the precedence of the operator on the stack is greater
-                 * than or equal to the precedence of the operator in the
-                 * input, pop the operator from the stack and add it to the
-                 * output
-                 */
-                if (strchr(precedence, stack.peek().op) <=
-                    strchr(precedence, token.op)) {
-                    tokens_postfix.push_back(stack.pop());
-                }
-                else {
-                    break;
-                }
-            }
+            /*
+             * if the precedence of the operator on the stack is greater
+             * than or equal to the precedence of the operator in the
+             * input, pop the operator from the stack and add it to the
+             * output
+             */
+            while (!stack.is_empty() && stack.peek().type != Token::LPAR &&
+                   priority(stack.peek().op) >= priority(token.op))
+                tokens_postfix.push_back(stack.pop());
             stack.push(token);
             break;
         }
@@ -223,6 +244,7 @@ float evaluate_postfix(List<Token> tokens)
             case '+': out = val_l + val_r; break;
             case '*': out = val_l * val_r; break;
             case '%': {
+                // check for division by zero
                 if ((int)val_r == 0)
                     throw std::string("Division by zero");
                 out = (float)((int)val_l % (int)val_r);
@@ -294,22 +316,21 @@ void tests()
         {"(38 + -39) * (40 - -41)", (float)-81},
         {"(-42 / -43) + 44", (float)44.9767441860465},
         {"-(5)*-(3)", (float)15.0},
+        {"-((-1+2)(2*50+3)+5)", (float)-108},
+        {"6/5(3+2)", (float)6},
+        {"6/5*(3+2)", (float)6},
 
     };
 
     bool err_flag = false;
 
-    // test cases for infix to postfix
+    // test cases with expected results
     for (Test i : tests) {
         try {
             std::cout << i.expression << " = ";
-            List<Token> test = tokenize(i.expression);
-            // std::cout << "Infix: ";
-            // print_tokens(test);
-            test = infix_to_postfix(test);
-            // std::cout << "Postfix: ";
-            // print_tokens(test);
-            float result = evaluate_postfix(test);
+            List<Token> tokens = tokenize(i.expression);
+            tokens             = infix_to_postfix(tokens);
+            float result       = evaluate_postfix(tokens);
             std::cout << std::left << std::setw(10) << result;
             if (result != i.result) {
                 err_flag = true;
@@ -324,7 +345,7 @@ void tests()
         }
     }
 
-    // invalid expressions
+    // test cases with invalid expressions
 
     std::string invalid_expressions[] = {
         "*1 + 2 + 3",   "2 +* 3",         "4 - 5 /",
@@ -332,21 +353,17 @@ void tests()
         "(41 / ) - 42", "(43 a 44) + 45", "(46 +* 47) * (48 - 49)",
         "5.3.3",        "((55",           "56))",
         "0 / 0",        "0 ^ 0",          "0 ^ -1",
-        "1/0",
+        "1/0",          "5 + 5 5",
     };
 
     for (std::string i : invalid_expressions) {
         try {
             std::cout << i << " = ";
-            List<Token> test = tokenize(i);
-            // std::cout << "Infix: ";
-            // print_tokens(test);
-            test = infix_to_postfix(test);
-            // std::cout << "Postfix: ";
-            // print_tokens(test);
-            float result = evaluate_postfix(test);
-            // should not reach here
+            List<Token> tokens = tokenize(i);
+            tokens             = infix_to_postfix(tokens);
+            float result       = evaluate_postfix(tokens);
             std::cout << "Result: " << result << "\t";
+            // should not reach here
             err_flag = true;
             std::cout << "ERROR: Expected exception" << std::endl;
         }

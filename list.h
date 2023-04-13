@@ -66,6 +66,14 @@ template <typename T> class List {
         size++;
     }
 
+    T pop_back()
+    {
+        if (size == 0)
+            throw "List is empty";
+        size--;
+        return arr[size];
+    }
+
     T& operator[](size_t index)
     {
         if (index >= size)
@@ -73,7 +81,7 @@ template <typename T> class List {
         return arr[index];
     }
     size_t get_size() { return size; }
-    T last() { return arr[size - 1]; }
+    T& last() { return arr[size - 1]; }
 
     // for cout printing
     friend std::ostream& operator<<(std::ostream& os, const List& list)
