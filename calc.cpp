@@ -1,7 +1,6 @@
 #include "list.h"
 #include "stack.h"
-#include <cmath> // pow
-#include <cstdlib>
+#include <cmath> // abs, pow
 #include <iomanip>
 #include <iostream> // cout
 #include <string>
@@ -32,7 +31,7 @@ struct Token {
     }
 };
 
-bool equals(float a, float b) { return std::abs(a - b) < EPSILON; }
+bool is_close(float a, float b) { return std::abs(a - b) < EPSILON; }
 
 // Returns the priority of an operator
 // Higher number means higher priority
@@ -252,16 +251,16 @@ float evaluate_postfix(List<Token> tokens)
             }
             case '/': {
                 // check for division by zero
-                if (equals(val_r, 0.0))
+                if (is_close(val_r, 0.0))
                     throw std::string("Division by zero");
                 out = val_l / val_r;
                 break;
             }
             case '^': {
                 // 0^x is undefined for x <= 0
-                if (equals(val_l, 0.0) && val_r <= EPSILON)
+                if (is_close(val_l, 0.0) && val_r <= EPSILON)
                     throw std::string("Division by zero");
-                out = (float)pow(val_l, val_r);
+                out = std::pow(val_l, val_r);
                 break;
             }
             default: throw std::string("Invalid operator");
